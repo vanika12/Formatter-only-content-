@@ -461,6 +461,7 @@ const detectSectionType = (heading) => {
   return "other"
 }
 
+
 const validateAndCleanData = (data, filename, originalText) => {
   // Ensure required fields exist
   if (!data.title || typeof data.title !== "object") {
@@ -497,6 +498,18 @@ const validateAndCleanData = (data, filename, originalText) => {
   data.metadata.documentType = data.metadata.documentType || "research_paper"
   data.metadata.sectionCount = data.sections.length
 
+  // // If sections are missing or empty, derive them heuristically from the original text
+  // if ((!data.sections || data.sections.length === 0) && originalText) {
+  //   try {
+  //     const derived = deriveSectionsFromText(originalText)
+  //     if (derived.length > 0) {
+  //       data.sections = derived
+  //     }
+  //   } catch (e) {
+  //     console.warn("[v0] Could not derive sections from text:", e.message)
+  //   }
+  // }
+
   // Clean section content
   data.sections = data.sections.map((section) => ({
     heading: section.heading || "Untitled Section",
@@ -509,3 +522,4 @@ const validateAndCleanData = (data, filename, originalText) => {
 }
 
 export default router
+

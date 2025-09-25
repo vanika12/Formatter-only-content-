@@ -36,20 +36,27 @@ const imageBuffer = fs.readFileSync(imagePath);
 const imageBase64 = imageBuffer.toString("base64");
 const imageSrc = `data:image/jpeg;base64,${imageBase64}`;
 
+// Fallback styles used when a section/subsection doesn't include formatting
+const DEFAULT_HEADING_STYLE = "font-size: 14pt; font-weight: bold; text-transform: uppercase; font-family: 'Times New Roman', serif; text-align: left; margin-top: 20pt; margin-bottom: 10pt;"
+const DEFAULT_SUB_HEADING_STYLE = "font-size: 12pt; font-weight: bold; font-family: 'Times New Roman', serif; text-align: left; margin-top: 12pt; margin-bottom: 6pt;"
+const DEFAULT_CONTENT_STYLE = "font-size: 12pt; font-family: 'Times New Roman', serif; line-height: 1.0; text-align: justify; margin-bottom: 12pt;"
+
+const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+
 export const exportToHTML = async (formattedDocument) => {
   const {
-    metadata,
-    header,
-    title,
-    authors,
-    affiliations,
-    abstract,
-    keywords,
-    sections,
-    references,
-    footer,
-    publicationInfo,
-  } = formattedDocument
+    metadata = { formatSpecs: { margins: { top: "0.76in", bottom: "0.42in", left: "0.42in", right: "0.42in" } } },
+    header = {},
+    title = { text: "" },
+    authors = { text: "", style: "" },
+    affiliations = [],
+    abstract = { heading: "ABSTRACT", content: "", style: { heading: "", content: "" } },
+    keywords = { heading: "Keywords", content: "", style: { heading: "", content: "" } },
+    sections = [],
+    references = { heading: "REFERENCES", content: [], style: { heading: "", content: "" } },
+    footer = {},
+    publicationInfo = null,
+  } = formattedDocument || {}
 
   const html = `
 <!DOCTYPE html>
@@ -333,18 +340,18 @@ export const exportToHTML = async (formattedDocument) => {
           .map(
             (section) => `
             <div class="section">
-                <div class="section-heading" style="${section.formatting.headingStyle}">
-                    ${section.heading}
+<div class=\"section-heading\" style=\"${(section && section.formatting && section.formatting.headingStyle) || DEFAULT_HEADING_STYLE}\">
+${esc(section.heading)}
                 </div>
-                <div class="section-content" style="${section.formatting.contentStyle}">
+<div class=\"section-content\" style=\"${(section && section.formatting && section.formatting.contentStyle) || DEFAULT_CONTENT_STYLE}\">
                     ${applyLatexFormatting(formatCitations(formatTablesAndFigures(section.content)))
                       .split(/\n\s*\n/)
                       .map((p) => p.trim())
                       .filter((p) => p)
                       .map((p) => {
                         const plain = p.replace(/<[^>]+>/g, '')
-                        return isLikelyHeading(plain)
-                          ? `<div class="section-heading" style="${section.formatting.headingStyle}">${plain}</div>`
+return isKeywordHeadingOnly(plain)
+? `<div class=\"section-heading\" style=\"${(section && section.formatting && section.formatting.headingStyle) || DEFAULT_HEADING_STYLE}\">${plain}</div>`
                           : `<p>${p}</p>`
                       })
                       .join("")}
@@ -356,18 +363,18 @@ export const exportToHTML = async (formattedDocument) => {
                         .map(
                           (subsection) => `
                         <div class="subsection">
-                            <div class="subsection-heading" style="${subsection.formatting.headingStyle}">
-                                ${subsection.heading}
+<div class=\"subsection-heading\" style=\"${(subsection && subsection.formatting && subsection.formatting.headingStyle) || DEFAULT_SUB_HEADING_STYLE}\">
+${esc(subsection.heading)}
                             </div>
-                            <div class="section-content" style="${subsection.formatting.contentStyle}">
+<div class=\"section-content\" style=\"${(subsection && subsection.formatting && subsection.formatting.contentStyle) || DEFAULT_CONTENT_STYLE}\">
                                 ${applyLatexFormatting(formatCitations(formatTablesAndFigures(subsection.content)))
                                   .split(/\n\s*\n/)
                                   .map((p) => p.trim())
                                   .filter((p) => p)
                                   .map((p) => {
                                     const plain = p.replace(/<[^>]+>/g, '')
-                                    return isLikelyHeading(plain)
-                                      ? `<div class="subsection-heading" style="${subsection.formatting.headingStyle}">${plain}</div>`
+return isKeywordHeadingOnly(plain)
+? `<div class=\"subsection-heading\" style=\"${(subsection && subsection.formatting && subsection.formatting.headingStyle) || DEFAULT_SUB_HEADING_STYLE}\">${plain}</div>`
                                       : `<p>${p}</p>`
                                   })
                                   .join("")}
@@ -667,8 +674,16 @@ const isLikelyHeading = (text) => {
 }
 
 export const exportToDocx = async (formattedDocument) => {
-  const { header, title, authors, affiliations, abstract, keywords, sections, references } =
-    formattedDocument;
+  const {
+    header = {},
+    title = { text: "" },
+    authors = { text: "" },
+    affiliations = [],
+    abstract = { heading: "ABSTRACT", content: "" },
+    keywords = { heading: "Keywords", content: "" },
+    sections = [],
+    references = { heading: "REFERENCES", content: [] },
+  } = formattedDocument || {}
 
   const docChildren = [];
 

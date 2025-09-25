@@ -17,16 +17,17 @@ export const formatToAcademicStandard = async (processedData) => {
     console.log("[v0] Starting academic formatting...")
     console.log("[v0] Input data structure:", Object.keys(processedData))
 
-    const title = processedData.title?.text || processedData.title || "Untitled Research Paper"
-    const authors = processedData.authors?.text || processedData.authors || ""
-    const abstract = processedData.abstract || { heading: "ABSTRACT", content: "" }
-    const keywords = processedData.keywords || { heading: "Keywords", content: "" }
-    const sections = processedData.sections || []
-    const references = processedData.references || { heading: "REFERENCES", content: [] }
-    const metadata = processedData.metadata || {}
-    const originalFilename = processedData.originalFilename || "document"
-    const publicationInfo = processedData.publicationInfo || null
-    const startPage = processedData.startPageNumber || 1;
+    // Default to blank-safe values so missing fields never break downstream exporters
+    const title = processedData.title?.text ?? processedData.title ?? ""
+    const authors = processedData.authors?.text ?? processedData.authors ?? ""
+    const abstract = processedData.abstract ?? { heading: "ABSTRACT", content: "" }
+    const keywords = processedData.keywords ?? { heading: "Keywords", content: "" }
+    const sections = processedData.sections ?? []
+    const references = processedData.references ?? { heading: "REFERENCES", content: [] }
+    const metadata = processedData.metadata ?? {}
+    const originalFilename = processedData.originalFilename ?? "document"
+    const publicationInfo = processedData.publicationInfo ?? null
+    const startPage = processedData.startPageNumber ?? 1;
 
     console.log("[v0] Extracted title:", title)
     console.log("[v0] Extracted authors:", authors)
